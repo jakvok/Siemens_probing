@@ -2,7 +2,7 @@
 
 class Cycle:
     '''
-    Class for inherit basic properties for Siemens probing cycles
+    Class represents Siemens probing cycles
     '''
 
     def __ask(self, variants, text):
@@ -31,7 +31,6 @@ class Cycle:
                 return int(input('\n'+text))
             except ValueError:
                 print('Enter int value.')
-
 
     def __init__(self):
         # [0,0,'',0,0,0,0,0,0,'1','\"\"','','0','1.01','1.01','-1.01','0.34','1','0','','1','1']
@@ -64,14 +63,6 @@ class Cycle:
                 if x in range(54,58) or x in range(508, 600): break
             if x < 500: self.body.append(x-53)
             else: self.body.append(x-500)
-            '''
-            # set offset
-            if self.body[0] not in [1001, 1002, 1003, 1004, 0, 1, 2, 3, 4]:    # if set zero point
-                vars = ['G54','G55','G56','G57','G505','G506','G507','G508']
-                a = self.__ask(vars, 'Set offset:')
-                for n in vars:
-                    if n == a: self.body.append(vars.index(n) + 1)
-            '''
         else:   # if just measure
             self.body.append('')
 
@@ -93,7 +84,7 @@ class Cycle:
         elif self.body[0] in [3, 103, 1003, 1103]: text = 'groove width'
         elif self.body[0] in [4, 104, 1004, 1104]: text = 'web width'
         else: pass
-        self.body.append(self.__enter_float('Enter {} [+-mm]:'.format(text)))
+        self.body.append(self.__enter_float('Enter {} [mm]:'.format(text)))
 
         if self.name == 977: self.body += ['', ''] # two empty values        
         
@@ -110,14 +101,13 @@ class Cycle:
 
             # Z axis move
             if self.body[0] in [1001, 1101, 1003, 1103]: self.body.append(self.__enter_float('Enter dive dist. into hole/groove in Z-axis [mm]:'))
-            elif self.body[0] in [1, 101, 3, 103]: self.body.append(0)
+            elif self.body[0] in [1, 101, 3, 103]: self.body.append(1)
             elif self.body[0] in [2, 102, 1002, 1102, 4, 104, 1004, 1104]: self.body.append(self.__enter_float('Enter dive dist. in Z-axis [mm]:'))
             else: pass
 
             # width/diameter of protection zone
-            if self.body[0] in [1103, 1104]: self.body.append(self.__enter_float('Enter width/diameter of protection zone [mm]:'))
-            elif self.body[0] in [103, 104]: self.body.append(1)
-            else: pass
+            if self.body[0] >= 1000: self.body.append(self.__enter_float('Enter width/diameter of protection zone [mm]:'))
+            else: self.body.append(1)
 
             # empty value
             self.body.append('')
@@ -147,14 +137,14 @@ class Cycle:
             self.body += ['1','\"\"','','0','1.01','1.01','-1.01','','','','','1']
 
         # groove/web/hole/shaft center position
-        if self.body[0] in [1003, 1103, 1004, 1104]: # if set Z.P. on groove/web
+        if self.body[0] in [103, 1103, 104, 1104]: # if set Z.P. on groove/web
             x = self.__enter_float('Enter groove/web center position [mm]:')
             if x == 0: self.body.append(1)
             else: self.body += [11,x]
-        elif self.body[0] in [1001, 1101, 1002, 1102]:
+        elif self.body[0] in [101, 1101, 102, 1102]:
             x = self.__enter_float('Enter hole/shaft center position in axe X [mm]:')
             y = self.__enter_float('Enter hole/shaft center position in axe Y [mm]:')
-            if (x+y) == 0: self.body.append(1)
+            if x == 0 and y ==0: self.body.append(1)
             else: self.body += [11,x,y]
         else: self.body.append(1)
 
@@ -164,10 +154,12 @@ class Cycle:
             x += str(n)+','
         return 'CYCLE{0}({1})'.format(self.name, x[:(len(x)-1)])
 
-print('''\nSiemens probing cycles for Grob 350
-v0.2
-by jakvok 2022
---------------------------''')
+print('''\n
++-------------------------------------+
+| Siemens probing cycles for Grob 350 |
+|              v0.2.2                 |
+|          by jakvok 2022             |
++-------------------------------------+''')
 
 while 1:
     x = Cycle()
