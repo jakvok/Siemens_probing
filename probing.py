@@ -2,7 +2,7 @@
 
 class Cycle:
     '''
-    Class represents Siemens probing cycles
+    Class represents Siemens probing cycles.
     '''
 
     def __ask(self, variants, text):
@@ -65,10 +65,11 @@ class Cycle:
             else: self.__offset -= 500
 
         # raw / soft
-        vars = ['raw', 'soft']
-        a = self.__ask(vars, 'Say if result values put into \'raw\' or \'soft\' offset table cell:')
-        if a == vars[0]: self.__raw = True
-        else: self.__raw = False
+        if self.__set_offset:
+            vars = ['raw', 'soft']
+            a = self.__ask(vars, 'Say if result values put into \'raw\' or \'soft\' offset table cell:')
+            if a == vars[0]: self.__raw = True
+            else: self.__raw = False
 
         # set of calibration data
         while 1:
@@ -79,7 +80,7 @@ class Cycle:
         # contingence interval
         self.__contingence_interval = (self.__enter_positive_nr('Enter contingence interval [s]:'))
         
-        # set of all cycle parameters
+        # list of all cycle parameters
         self.__body = []
 
         # static parameters when cycle sets offset
@@ -165,7 +166,7 @@ class Cycle:
             if self.__probing_var == 'hole': text = 'hole diameter'
             elif self.__probing_var == 'shaft': text = 'shaft diameter'
             elif self.__probing_var == 'groove': text = 'groove width'
-            elif self.__probing_var == 'width': text = 'web width'
+            elif self.__probing_var == 'web': text = 'web width'
             else: pass
             self.__value = self.__enter_nr('Enter {} [mm]:'.format(text))
 
@@ -175,8 +176,8 @@ class Cycle:
             # probing angle
             while 1:
                 self.__probing_angle = self.__enter_nr('Enter probing angle between probing direction and axe [deg]:')
-                if int(self.__probing_angle) in range(0, 360): break
-                print('Probing angle must be in range 0-360 deg!')
+                if int(self.__probing_angle) in range(-359, 360): break
+                print('Probing angle must be in range -359 to 359 deg!')
 
             # protection zone
             vars = ['YES', 'NO']
@@ -187,7 +188,9 @@ class Cycle:
             else: self.__protection_zone = False
 
             # dive distance
-            if self.__probing_var in ['hole', 'groove'] and self.__protection_zone:
+            if self.__probing_var in ['hole', 'groove'] and not self.__protection_zone:
+                self.__dive_dist = 1
+            else:
                 self.__dive_dist = self.__enter_positive_nr('Set dive distance DZ [mm]:')
 
             # probing axe
@@ -196,11 +199,14 @@ class Cycle:
                 a = self.__ask(vars, 'Set probing axe:')
                 for n in vars:
                     if n == a: self.__axe = vars.index(n) + 1
-                # center position
+
+            # center position
+            if self.__set_offset and self.__probing_var in ['groove', 'web']:
                 self.__center = [self.__enter_nr('Set groove/web center position in axe {} [mm]:'.format(chr(87+self.__axe)))]            
-            else:
+            elif self.__set_offset and self.__probing_var in ['hole', 'shaft']:
                 self.__center = [self.__enter_nr('Set hole/shaft position in axe X [mm]:')]
                 self.__center += [self.__enter_nr('Set hole/shaft position in axe Y [mm]:')]
+            else: self.__center = [0, 0]
 
 
 
